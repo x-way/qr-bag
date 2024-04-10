@@ -3,7 +3,7 @@ module github.com/x-way/qr-bag
 go 1.19
 
 require (
-	github.com/yeqown/go-qrcode/v2 v2.2.2
+	github.com/yeqown/go-qrcode/v2 v2.2.3
 	github.com/yeqown/go-qrcode/writer/standard v1.2.3
 )
 
