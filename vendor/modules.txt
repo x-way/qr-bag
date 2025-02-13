@@ -1,0 +1,28 @@
+# github.com/fogleman/gg v1.3.0
+## explicit
+github.com/fogleman/gg
+# github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
+## explicit
+github.com/golang/freetype/raster
+github.com/golang/freetype/truetype
+# github.com/pkg/errors v0.9.1
+## explicit
+github.com/pkg/errors
+# github.com/yeqown/go-qrcode/v2 v2.2.4
+## explicit; go 1.18
+github.com/yeqown/go-qrcode/v2
+# github.com/yeqown/go-qrcode/writer/standard v1.2.4
+## explicit; go 1.17
+github.com/yeqown/go-qrcode/writer/standard
+github.com/yeqown/go-qrcode/writer/standard/imgkit
+# github.com/yeqown/reedsolomon v1.0.0
+## explicit
+github.com/yeqown/reedsolomon
+github.com/yeqown/reedsolomon/binary
+# golang.org/x/image v0.24.0
+## explicit; go 1.18
+golang.org/x/image/draw
+golang.org/x/image/font
+golang.org/x/image/font/basicfont
+golang.org/x/image/math/f64
+golang.org/x/image/math/fixed
