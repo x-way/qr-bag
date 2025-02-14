@@ -11,7 +11,7 @@ github.com/pkg/errors
 # github.com/yeqown/go-qrcode/v2 v2.2.5
 ## explicit; go 1.18
 github.com/yeqown/go-qrcode/v2
-# github.com/yeqown/go-qrcode/writer/standard v1.2.4
+# github.com/yeqown/go-qrcode/writer/standard v1.2.5
 ## explicit; go 1.17
 github.com/yeqown/go-qrcode/writer/standard
 github.com/yeqown/go-qrcode/writer/standard/imgkit
