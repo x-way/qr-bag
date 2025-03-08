@@ -1,6 +1,6 @@
 module github.com/x-way/qr-bag
 
-go 1.23.5
+go 1.23.0
 
 require (
 	github.com/yeqown/go-qrcode/v2 v2.2.5
