@@ -142,12 +142,45 @@ func draw(mat qrcode.Matrix, opt *outputImageOptions) image.Image {
 		// _ = imgkit.Save(halftoneImg, "mask.jpeg")
 	}
 
+	// Check if the logo image exists and fits within the QR code bounds.
+	// If so, mark it as valid and store its dimensions for safe zone calculation.
+	var logoValid bool
+	var logoWidth, logoHeight int
+	if opt.logoImage() != nil {
+		bound := opt.logo.Bounds()
+		upperLeft, lowerRight := bound.Min, bound.Max
+		logoWidth, logoHeight = lowerRight.X-upperLeft.X, lowerRight.Y-upperLeft.Y
+
+		logoValid = validLogoImage(w, h, logoWidth, logoHeight, opt.logoSizeMultiplier)
+	}
+
+	// bitMap stores which blocks are set (true = active block)
+	bitMap := mat.Bitmap()
+	// If the logo safe zone is enabled, clear the corresponding area in bitMap
+	if logoValid && opt.logoSafeZone {
+		mat.Iterate(qrcode.IterDirection_ROW, func(x int, y int, v qrcode.QRValue) {
+			if blockOverlapsLogo(x, y, opt.qrBlockWidth(), left, top, w, h, logoWidth, logoHeight) {
+				bitMap[x][y] = false
+			}
+		})
+	}
+
 	// iterate the matrix to Draw each pixel
 	mat.Iterate(qrcode.IterDirection_ROW, func(x int, y int, v qrcode.QRValue) {
+		// Skip drawing this block if it overlaps with the logo area.
+		// This preserves logo visibility by preventing block rendering underneath it.
+		if logoValid && opt.logoSafeZone &&
+			blockOverlapsLogo(x, y, opt.qrBlockWidth(), left, top, w, h, logoWidth, logoHeight) {
+			if v.IsSet() {
+				return
+			}
+		}
+
 		// Draw the block
 		ctx.x, ctx.y = float64(x*opt.qrBlockWidth()+left), float64(y*opt.qrBlockWidth()+top)
 		ctx.w, ctx.h = opt.qrBlockWidth(), opt.qrBlockWidth()
 		ctx.color = opt.translateToRGBA(v)
+		ctx.neighbours = getNeighbours(bitMap, x, y)
 
 		// DONE(@yeqown): make this abstract to Shapes
 		switch typ := v.Type(); typ {
@@ -189,25 +222,66 @@ func draw(mat qrcode.Matrix, opt *outputImageOptions) image.Image {
 		dc.DrawImage(img, 0, 0)
 	}
 
-	// DONE(@yeqown): add logo image
-	if opt.logoImage() != nil {
-		// Draw logo image into rgba
-		bound := opt.logo.Bounds()
-		upperLeft, lowerRight := bound.Min, bound.Max
-		logoWidth, logoHeight := lowerRight.X-upperLeft.X, lowerRight.Y-upperLeft.Y
-
-		if !validLogoImage(w, h, logoWidth, logoHeight, opt.logoSizeMultiplier) {
-			log.Printf("w=%d, h=%d, logoW=%d, logoH=%d, logo is over than 1/%d of QRCode \n",
-				w, h, logoWidth, logoHeight, opt.logoSizeMultiplier)
-			goto done
-		}
-
-		// DONE(@yeqown): calculate the xOffset and yOffset which point(xOffset, yOffset)
-		// should icon upper-left to start
-		dc.DrawImage(opt.logoImage(), (w-logoWidth)/2, (h-logoHeight)/2)
+	if opt.logoImage() == nil {
+		goto done
 	}
+
+	// Log a warning and skip drawing the logo if it exceeds the allowed size ratio.
+	if !logoValid {
+		log.Printf("w=%d, h=%d, logoW=%d, logoH=%d, logo is over than 1/%d of QRCode \n",
+			w, h, logoWidth, logoHeight, opt.logoSizeMultiplier)
+		goto done
+	}
+
+	// DONE(@yeqown): calculate the xOffset and yOffset which point(xOffset, yOffset)
+	// should icon upper-left to start
+	dc.DrawImage(opt.logoImage(), (w-logoWidth)/2, (h-logoHeight)/2)
+
 done:
 	return dc.Image()
+}
+
+// getNeighbours returns a bitmask (uint16) representing the 8 neighboring cells
+// around the (x, y) position in the matrix. Each bit corresponds to a specific
+// direction and is set if the neighboring cell is within bounds and set to `true`.
+// The center cell itself (x, y) is included as NSelf if it is also `true`.
+func getNeighbours(mtx [][]bool, x, y int) uint16 {
+	dirs := []struct {
+		dx, dy int
+		flag   uint16
+	}{
+		{-1, -1, NTopLeft},
+		{0, -1, NTop},
+		{1, -1, NTopRight},
+		{-1, 0, NLeft},
+		{1, 0, NRight},
+		{-1, 1, NBotLeft},
+		{0, 1, NBot},
+		{1, 1, NBotRight},
+	}
+
+	var res uint16
+
+	rows := len(mtx)
+	if rows == 0 {
+		return res
+	}
+	cols := len(mtx[0])
+
+	// Check the center cell
+	if y >= 0 && y < rows && x >= 0 && x < cols && mtx[y][x] {
+		res |= NSelf
+	}
+
+	// Check neighbors
+	for _, d := range dirs {
+		nx, ny := x+d.dx, y+d.dy
+		if ny >= 0 && ny < rows && nx >= 0 && nx < cols && mtx[ny][nx] {
+			res |= d.flag
+		}
+	}
+
+	return res
 }
 
 // halftoneImage is an image.Gray type image, which At(x, y) return color.Gray.
@@ -233,6 +307,21 @@ func halftoneColor(halftoneImage image.Image, transparent bool, x, y int) color.
 
 func validLogoImage(qrWidth, qrHeight, logoWidth, logoHeight, logoSizeMultiplier int) bool {
 	return qrWidth >= logoSizeMultiplier*logoWidth && qrHeight >= logoSizeMultiplier*logoHeight
+}
+
+func blockOverlapsLogo(x, y, blockSize, left, top, w, h, logoWidth, logoHeight int) bool {
+	blockLeft := x*blockSize + left
+	blockTop := y*blockSize + top
+	blockRight := blockLeft + blockSize
+	blockBottom := blockTop + blockSize
+
+	logoLeft := (w - logoWidth) / 2
+	logoTop := (h - logoHeight) / 2
+	logoRight := logoLeft + logoWidth
+	logoBottom := logoTop + logoHeight
+
+	return blockRight > logoLeft && blockLeft < logoRight &&
+		blockBottom > logoTop && blockTop < logoBottom
 }
 
 // Attribute contains basic information of generated image.
