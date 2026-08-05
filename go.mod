@@ -3,7 +3,7 @@ module github.com/x-way/qr-bag
 go 1.25.0
 
 require (
-	github.com/yeqown/go-qrcode/v2 v2.2.5
+	github.com/yeqown/go-qrcode/v2 v2.3.0
 	github.com/yeqown/go-qrcode/writer/standard v1.3.0
 )
 
@@ -13,4 +13,5 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/yeqown/reedsolomon v1.0.0 // indirect
 	golang.org/x/image v0.44.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 )
