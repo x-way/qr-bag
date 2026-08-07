@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/yeqown/go-qrcode/v2 v2.3.0
-	github.com/yeqown/go-qrcode/writer/standard v1.3.0
+	github.com/yeqown/go-qrcode/writer/standard v1.4.0
 )
 
 require (
