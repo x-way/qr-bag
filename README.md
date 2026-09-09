@@ -1,5 +1,4 @@
 # qr-bag
-[![Go Report Card](https://goreportcard.com/badge/github.com/x-way/qr-bag)](https://goreportcard.com/report/github.com/x-way/qr-bag)
 
 Generate a QR code with a lost bag logo in the middle pointing to a URL with information about the owner.
 
